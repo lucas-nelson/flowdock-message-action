@@ -2,16 +2,53 @@
 
 set -euo pipefail
 
-env | sort
-
-if [[ -z "$GITHUB_TOKEN" ]]; then
-  echo "GITHUB_TOKEN needs to be set"
+if [[ -z "${FLOWDOCK_TOKEN:-}" ]]; then
+  echo "FLOWDOCK_TOKEN secret needs to be set"
   exit 1
 fi
 
-echo "GITHUB_EVENT_PATH=${GITHUB_EVENT_PATH}"
-cat "${GITHUB_EVENT_PATH}"
+if [[ -z "${PR_ACTION:-}" ]]; then
+  echo "PR_ACTION environment variable needs to be set, e.g. opened"
+  exit 2
+fi
 
-action=$(jq --raw-output .action "$GITHUB_EVENT_PATH")
+if [[ -z "${PR_USER:-}" ]]; then
+  echo "PR_USER environment variable needs to be set, e.g. dependabot"
+  exit 2
+fi
 
-echo "action=${action}"
+# echo "DEBUG -> GITHUB_EVENT_PATH=${GITHUB_EVENT_PATH}"
+# echo "DEBUG -> $(cat ${GITHUB_EVENT_PATH})"
+
+login=$(jq --raw-output .pull_request.user.login "$GITHUB_EVENT_PATH")
+if [[ "${login}" != ${PR_USER} ]]; then
+  echo "DEBUG -> ${login} is not user ${PR_USER}, bailing out"
+  exit 0
+fi
+
+action=$(jq --raw-output .action "${GITHUB_EVENT_PATH}")
+if [[ "${action}" != ${PR_ACTION} ]]; then
+  echo "DEBUG -> ${action} is not pull request action ${PR_ACTION}, bailing out"
+  exit 0
+fi
+
+html_url=$(jq --raw-output .pull_request.html_url "$GITHUB_EVENT_PATH")
+title=$(jq --raw-output .pull_request.title "$GITHUB_EVENT_PATH")
+
+echo "DEBUG -> posting new message to flowdock"
+echo "DBEUG -> ${html_url}"
+echo "DEBUG -> * ${title}"
+
+body="{
+  \"event\": \"message\",
+  \"flow_token\": \"${FLOWDOCK_TOKEN}\",
+  \"content\": \"${html_url}
+* ${title}\"
+}"
+
+curl \
+  -i \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d "${body}" \
+  https://api.flowdock.com/flows/blake/github-actions-test/messages
