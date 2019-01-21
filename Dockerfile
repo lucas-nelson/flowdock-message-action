@@ -5,6 +5,6 @@ LABEL "com.github.actions.description"="Post a Flowdock message when a user does
 
 RUN apk add --no-cache bash ca-certificates curl jq
 
-COPY flowdock-message-action .
+COPY flowdock-message-action /usr/bin/flowdock-message-action
 
-ENTRYPOINT ["./flowdock-message-action"]
+ENTRYPOINT ["flowdock-message-action"]
