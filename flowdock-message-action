@@ -21,13 +21,13 @@ fi
 # echo "DEBUG -> $(cat ${GITHUB_EVENT_PATH})"
 
 login=$(jq --raw-output .pull_request.user.login "$GITHUB_EVENT_PATH")
-if [[ "${login}" != ${PR_USER} ]]; then
+if [[ "${login}" != "${PR_USER}" ]]; then
   echo "DEBUG -> ${login} is not user ${PR_USER}, bailing out"
   exit 78
 fi
 
 action=$(jq --raw-output .action "${GITHUB_EVENT_PATH}")
-if [[ "${action}" != ${PR_ACTION} ]]; then
+if [[ "${action}" != "${PR_ACTION}" ]]; then
   echo "DEBUG -> ${action} is not pull request action ${PR_ACTION}, bailing out"
   exit 78
 fi
