@@ -42,8 +42,7 @@ echo "DEBUG -> * ${title}"
 body="{
   \"event\": \"message\",
   \"flow_token\": \"${FLOWDOCK_TOKEN}\",
-  \"content\": \"${html_url}
-* ${title}\"
+  \"content\": \"${html_url} - ${title}\"
 }"
 
 curl \
